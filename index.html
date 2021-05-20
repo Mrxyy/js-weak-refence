@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Static Template</title>
+  </head>
+  <body>
+    <h1>JS中GC回收-弱引用</h1>
+    <script>
+      const registry = new FinalizationRegistry((heldValue) => {
+        console.log(heldValue);
+      });
+
+      function closePackage(flag) {
+        let a = flag ? { a: 1 } : new WeakRef({ a: 1 });
+        registry.register(
+          a.deref ? a.deref() : a,
+          flag ? "b 被回收" : "c 被回收"
+        );
+        return () => a;
+      }
+
+      let b = closePackage(true); //闭包中的 a 没有被回收
+      let c = closePackage(); //闭包中的c，依旧被回收
+
+      const weakSet = new WeakSet();
+
+      function init() {
+        let a = {};
+        registry.register(a, "a 被回收");
+        let b = {};
+        registry.register(b, "b 被回收");
+        weakSet.add(a);
+        weakSet.add(b);
+        return a;
+      }
+
+      let a = init();
+
+      console.log(a); // a 没有回收，b尽管被 weakSet引用但是还被回收
+    </script>
+  </body>
+</html>
